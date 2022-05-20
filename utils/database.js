@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
 
 ////////////////////////////////////////////////////////////
-
+// database 是 Sequelize class 的實例(實體, instance)
 const database = new Sequelize('demo', 'root', 'ricky', {
     dialect: 'mysql',
     host: 'localhost'
