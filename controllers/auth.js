@@ -11,7 +11,7 @@ const getLogin = (req, res) => {
 
 const postLogin = (req, res) => {
     const { email, password } = req.body;
-    User.findOne({ where: { email }})
+    User.findOne({ where: { email } })
         .then((user) => {
             if (!user) {
                 console.log('login: 找不到此 user 或密碼錯誤');
@@ -21,7 +21,7 @@ const postLogin = (req, res) => {
                 console.log('login: 成功');
                 req.session.isLogin = true;
                 return res.redirect('/')
-            } 
+            }
             console.log('login: 找不到此 user 或密碼錯誤');
             res.redirect('/login');
         })
@@ -31,8 +31,9 @@ const postLogin = (req, res) => {
 };
 
 const postLogout = (req, res) => {
-    // TODO: 實作 logout 機制
-    res.redirect('/login')
+    req.session.destroy((err) => {
+        res.redirect('/login')
+    });
 }
 
 module.exports = {
