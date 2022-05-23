@@ -3,9 +3,11 @@ const path = require('path');
 
 // 第二個區塊 第三方模組(套件)
 const express = require('express');
-const bodyParser = require('body-parser');
+
 const session = require('express-session');
 const connectFlash = require('connect-flash');
+const csrfProtection = require('csurf');
+const bodyParser = require('body-parser');
 
 // 第三個區塊 自建模組
 const database = require('./utils/database');
@@ -14,6 +16,9 @@ const shopRoutes = require('./routes/shop');
 const errorRoutes = require('./routes/404');
 const Product = require('./models/product');
 const User = require('./models/user');
+const Cart = require('./models/cart');
+const CartItem = require('./models/cart-item');
+const { userInfo } = require('os');
 
 ////////////////////////////////////////////////////////////////
 
@@ -25,23 +30,47 @@ const oneDay = 1000 * 60 * 60 * 24;
 app.set('view engine', 'ejs');
 app.set('views', 'views');
 
+app.use(bodyParser.urlencoded({ extended: false }));
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({
-    secret: 'sessionToken',  // 加密用的字串
-    resave: false,   // 沒變更內容是否強制回存
-    saveUninitialized: false,  // 新 session 未變更內容是否儲存
+    secret: 'my secret',
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-        maxAge: oneDay // session 狀態儲存多久？單位為毫秒
+        maxAge: oneDay,
     }
 }));
 app.use(connectFlash());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(csrfProtection());
+
+
+// NOTE: 取得 User model (如果已登入的話)
+app.use((req, res, next) => {
+    if (!req.session.user) {
+        return next();
+    }
+    User.findByPk(req.session.user.id)
+        .then((user) => {
+            req.user = user;
+            next();
+        })
+        .catch((err) => {
+            console.log('find user by session id error: ', err);
+        })
+});
 
 app.use((req, res, next) => {
     res.locals.path = req.url;
     res.locals.isLogin = req.session.isLogin || false;
+    res.locals.csrfToken = req.csrfToken();
     next();
 });
+User.hasOne(Cart);
+Cart.belongsTo(User);
+
+Cart.belongsToMany(Product, { through: CartItem });
+Product.belongsToMany(Cart, { through: CartItem });
 
 app.use(authRoutes);
 app.use(shopRoutes);
@@ -49,10 +78,11 @@ app.use(errorRoutes);
 
 database
     // .sync()
-    .sync({ force: true })
+    .sync({ force: true })//和 db連線，強制重設db
     .then((result) => {
         // User.create({ displayName: 'Admin', email: 'admin@skoob.com', password: '11111111' });
         // Product.bulkCreate(products);
+        Product.bulkCreate(products);
         app.listen(port, () => {
             console.log(`Web Server is running on port ${port}`);
         });

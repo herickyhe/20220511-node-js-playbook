@@ -12,17 +12,24 @@
         <li class="nav-item">
           <a class="nav-link <%= path === '/' ? 'active' : '' %>" aria-current="page" href="/">Home</a>
         </li>
-        <% if(!isLogin ) { %>
+        <% if (isLogin) { %>
           <li class="nav-item">
-            <a class="nav-link <%= path === '/login' ? 'active' : '' %>" href="/login">Login</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link <%= path === '/signup' ? 'active' : '' %>" aria-current="page" href="/signup">Signup</a>
+            <a class="nav-link <%= path === '/cart' ? 'active' : '' %>" aria-current="page" href="/cart">Cart</a>
           </li>
           <% } %>
+            <% if(!isLogin ) { %>
+              <li class="nav-item">
+                <a class="nav-link <%= path === '/login' ? 'active' : '' %>" href="/login">Login</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link <%= path === '/signup' ? 'active' : '' %>" aria-current="page"
+                  href="/signup">Signup</a>
+              </li>
+              <% } %>
       </ul>
       <% if(isLogin ) { %>
         <form class="d-flex" action="/logout" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button class="btn btn-outline-success" type="submit">Logout</button>
         </form>
         <% } %>
